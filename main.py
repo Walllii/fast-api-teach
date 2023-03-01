@@ -37,5 +37,10 @@ async def getInfoONEproduct(id: int):
         notfound()
 
 
+
+
+
+
+
 @app.post("/create?id={id}&name={name}&price={}")
 
