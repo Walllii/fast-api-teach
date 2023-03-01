@@ -4,7 +4,6 @@ from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
-
 class Product:
 
     id: int
