@@ -1,46 +1,71 @@
+from datetime import datetime
+from enum import Enum
+from typing import List, Optional
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-
+from pydantic import BaseModel
 
 app = FastAPI()
 
-class Product:
 
+data_people2 = [
+    {"id": 1, "role": "admin", "name": "Charly"},
+    {"id": 2, "role": "investor", "name": "Harry"},
+    {"id": 3, "role": "trader", "name": "Ken"},
+    {"id": 4, "role": "trader", "name": "Homer", "degree": [
+        {"id": 1, "created_at": "2020-09-03T15:36:45", "type_dergee": "expert"}
+    ]}]
+
+
+class DegreeType(Enum):
+    newbie = "newbie"
+    expert = "expert"
+
+
+class Degree(BaseModel):
     id: int
+    created_at: datetime
+    type_dergee: DegreeType
+
+
+class User(BaseModel):
+    id: int
+    role: str
     name: str
-    price: int
+    degree: Optional[List[Degree]] = []
 
 
-bd = [Product() for i in range(3)]
+@app.get("/users/{user_id}", response_model=List[User])
+async def getUserId(user_id: int):
+    return [user for user in data_people2 if user.get("id") == user_id]
 
 
-@app.get("/notfound", response_class = HTMLResponse, status_code=404)
-def notfound():
-    return  "<h1>Resource Not Found</h1>"
+@app.get("/trades")
+async def getTrades(limit: int, offset: int):
+    return data_trades[offset:][:limit]
 
 
-@app.get("/")
-async def root():
-    return "Hello"
+@app.post("/users/{user_id}")
+async def changeUserName(user_id: int, new_name: str):
+    current_user = list(filter(lambda user: user.get("id") == user_id, data_people2))[0]
+    current_user["name"] = new_name
+    return {'status': 200, 'data': current_user}
 
 
-@app.get("/info")
-async def getInfoProducts():
-    return bd
+data_trades = [
+    {"id": 1, "user_id": 1, "currency": "BTC", "side": "buy", "price": 123, "amount": 2.12},
+    {"id": 2, "user_id": 1, "currency": "BTC", "side": "buy", "price": 125, "amount": 2.12}]
 
 
-@app.get("/info/{id}")
-async def getInfoONEproduct(id: int):
-    if id == Product.id:
-        return {f"{Product.id}": f"name: {Product.name}, price: {Product.price}"}
-    else:
-        notfound()
+class Trade(BaseModel):
+    id: int
+    user_id: int
+    currency: str
+    side: str
+    price: float
+    amount: int
 
 
-
-
-
-
-
-@app.post("/create?id={id}&name={name}&price={}")
-
+@app.post("/trades")
+async def addNewTrades(trades: List[Trade]):
+    data_trades.extend(trades)
+    return {'status': 200, 'data': data_trades}
